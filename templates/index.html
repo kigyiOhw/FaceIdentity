@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人脸识别系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            padding: 40px;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .tab {
+            padding: 15px 30px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1.1em;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .upload-icon {
+            font-size: 3em;
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .upload-text {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+            margin: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+        }
+        
+        .results {
+            margin-top: 30px;
+        }
+        
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .result-card.unknown {
+            border-left-color: #dc3545;
+        }
+        
+        .person-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .info-item {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            color: #666;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        
+        .form-group textarea {
+            height: 80px;
+            resize: vertical;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .logs-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .logs-table th,
+        .logs-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .logs-table th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+        
+        .logs-table tr:hover {
+            background: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎭 人脸识别系统</h1>
+            <p>智能人脸识别与人员管理系统</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('recognition')">人脸识别</button>
+                <button class="tab" onclick="switchTab('add-person')">添加人员</button>
+                <button class="tab" onclick="switchTab('logs')">识别记录</button>
+            </div>
+            
+            <!-- 人脸识别标签页 -->
+            <div id="recognition" class="tab-content active">
+                <div class="upload-area" onclick="document.getElementById('recognition-file').click()">
+                    <div class="upload-icon">📷</div>
+                    <div class="upload-text">点击或拖拽图片到此处进行人脸识别</div>
+                    <div style="color: #999; font-size: 0.9em;">支持 PNG, JPG, JPEG, GIF, BMP 格式</div>
+                </div>
+                <input type="file" id="recognition-file" class="file-input" accept="image/*" onchange="handleRecognitionFile(this)">
+                
+                <div id="recognition-results" class="results"></div>
+            </div>
+            
+            <!-- 添加人员标签页 -->
+            <div id="add-person" class="tab-content">
+                <div class="upload-area" onclick="document.getElementById('add-person-file').click()">
+                    <div class="upload-icon">👤</div>
+                    <div class="upload-text">点击或拖拽图片到此处添加新人员</div>
+                    <div style="color: #999; font-size: 0.9em;">请确保图片中只有一个人脸</div>
+                </div>
+                <input type="file" id="add-person-file" class="file-input" accept="image/*" onchange="handleAddPersonFile(this)">
+                
+                <div id="person-form" style="display: none;">
+                    <h3>人员信息</h3>
+                    <form id="person-info-form">
+                        <div class="form-group">
+                            <label for="name">姓名 *</label>
+                            <input type="text" id="name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="age">年龄</label>
+                            <input type="number" id="age" name="age" min="1" max="120">
+                        </div>
+                        <div class="form-group">
+                            <label for="gender">性别</label>
+                            <select id="gender" name="gender">
+                                <option value="">请选择</option>
+                                <option value="男">男</option>
+                                <option value="女">女</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">电话</label>
+                            <input type="tel" id="phone" name="phone">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">邮箱</label>
+                            <input type="email" id="email" name="email">
+                        </div>
+                        <div class="form-group">
+                            <label for="address">地址</label>
+                            <textarea id="address" name="address"></textarea>
+                        </div>
+                        <button type="submit" class="btn">添加人员</button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- 识别记录标签页 -->
+            <div id="logs" class="tab-content">
+                <h3>识别记录</h3>
+                <button class="btn" onclick="loadRecognitionLogs()">刷新记录</button>
+                <div id="logs-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentFile = null;
+        
+        // 切换标签页
+        function switchTab(tabName) {
+            // 隐藏所有标签页内容
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 移除所有标签的激活状态
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 显示选中的标签页
+            document.getElementById(tabName).classList.add('active');
+            
+            // 激活对应的标签
+            event.target.classList.add('active');
+        }
+        
+        // 处理人脸识别文件
+        function handleRecognitionFile(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                uploadForRecognition(file);
+            }
+        }
+        
+        // 上传文件进行识别
+        function uploadForRecognition(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            showLoading('recognition-results', '正在识别人脸...');
+            
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayRecognitionResults(data.results);
+                } else {
+                    showError('recognition-results', data.error);
+                }
+            })
+            .catch(error => {
+                showError('recognition-results', '识别过程中发生错误: ' + error.message);
+            });
+        }
+        
+        // 处理添加人员文件
+        function handleAddPersonFile(input) {
+            if (input.files && input.files[0]) {
+                currentFile = input.files[0];
+                document.getElementById('person-form').style.display = 'block';
+            }
+        }
+        
+        // 显示识别结果
+        function displayRecognitionResults(results) {
+            const container = document.getElementById('recognition-results');
+            
+            if (results.length === 0) {
+                container.innerHTML = '<div class="alert alert-error">未检测到人脸</div>';
+                return;
+            }
+            
+            let html = '';
+            results.forEach(result => {
+                const isUnknown = result.name === '未知';
+                html += `
+                    <div class="result-card ${isUnknown ? 'unknown' : ''}">
+                        <h4>${result.name}</h4>
+                        ${isUnknown ? '<p style="color: #dc3545;">未识别的人脸，请添加人员信息</p>' : ''}
+                        ${!isUnknown ? `
+                            <div class="person-info">
+                                <div class="info-item">
+                                    <div class="info-label">姓名</div>
+                                    <div class="info-value">${result.name}</div>
+                                </div>
+                                ${result.age ? `
+                                <div class="info-item">
+                                    <div class="info-label">年龄</div>
+                                    <div class="info-value">${result.age}</div>
+                                </div>
+                                ` : ''}
+                                ${result.gender ? `
+                                <div class="info-item">
+                                    <div class="info-label">性别</div>
+                                    <div class="info-value">${result.gender}</div>
+                                </div>
+                                ` : ''}
+                                ${result.phone ? `
+                                <div class="info-item">
+                                    <div class="info-label">电话</div>
+                                    <div class="info-value">${result.phone}</div>
+                                </div>
+                                ` : ''}
+                                ${result.email ? `
+                                <div class="info-item">
+                                    <div class="info-label">邮箱</div>
+                                    <div class="info-value">${result.email}</div>
+                                </div>
+                                ` : ''}
+                                ${result.address ? `
+                                <div class="info-item">
+                                    <div class="info-label">地址</div>
+                                    <div class="info-value">${result.address}</div>
+                                </div>
+                                ` : ''}
+                                <div class="info-item">
+                                    <div class="info-label">识别置信度</div>
+                                    <div class="info-value">${(result.confidence * 100).toFixed(1)}%</div>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // 显示加载状态
+        function showLoading(containerId, message) {
+            document.getElementById(containerId).innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div>${message}</div>
+                </div>
+            `;
+        }
+        
+        // 显示错误信息
+        function showError(containerId, message) {
+            document.getElementById(containerId).innerHTML = `
+                <div class="alert alert-error">${message}</div>
+            `;
+        }
+        
+        // 处理添加人员表单提交
+        document.getElementById('person-info-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!currentFile) {
+                alert('请先选择图片');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', currentFile);
+            
+            // 收集表单数据
+            const form = document.getElementById('person-info-form');
+            const formDataObj = new FormData(form);
+            
+            // 将表单数据添加到FormData
+            for (let [key, value] of formDataObj.entries()) {
+                if (value) {
+                    formData.append(key, value);
+                }
+            }
+            
+            showLoading('person-form', '正在添加人员...');
+            
+            fetch('/add_person', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccess('person-form', data.message);
+                    form.reset();
+                    document.getElementById('person-form').style.display = 'none';
+                    currentFile = null;
+                } else {
+                    showError('person-form', data.error);
+                }
+            })
+            .catch(error => {
+                showError('person-form', '添加人员时发生错误: ' + error.message);
+            });
+        });
+        
+        // 显示成功信息
+        function showSuccess(containerId, message) {
+            document.getElementById(containerId).innerHTML = `
+                <div class="alert alert-success">${message}</div>
+            `;
+        }
+        
+        // 加载识别记录
+        function loadRecognitionLogs() {
+            showLoading('logs-content', '正在加载识别记录...');
+            
+            fetch('/recognition_logs')
+            .then(response => response.json())
+            .then(data => {
+                if (data.logs) {
+                    displayRecognitionLogs(data.logs);
+                } else {
+                    showError('logs-content', data.error || '加载记录失败');
+                }
+            })
+            .catch(error => {
+                showError('logs-content', '加载记录时发生错误: ' + error.message);
+            });
+        }
+        
+        // 显示识别记录
+        function displayRecognitionLogs(logs) {
+            const container = document.getElementById('logs-content');
+            
+            if (logs.length === 0) {
+                container.innerHTML = '<div class="alert alert-error">暂无识别记录</div>';
+                return;
+            }
+            
+            let html = `
+                <table class="logs-table">
+                    <thead>
+                        <tr>
+                            <th>时间</th>
+                            <th>姓名</th>
+                            <th>年龄</th>
+                            <th>性别</th>
+                            <th>置信度</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            logs.forEach(log => {
+                html += `
+                    <tr>
+                        <td>${new Date(log.recognition_time).toLocaleString()}</td>
+                        <td>${log.name || '未知'}</td>
+                        <td>${log.age || '-'}</td>
+                        <td>${log.gender || '-'}</td>
+                        <td>${log.confidence ? (log.confidence * 100).toFixed(1) + '%' : '-'}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        // 页面加载时自动加载识别记录
+        window.addEventListener('load', function() {
+            loadRecognitionLogs();
+        });
+        
+        // 拖拽上传功能
+        document.querySelectorAll('.upload-area').forEach(area => {
+            area.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('dragover');
+            });
+            
+            area.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+            });
+            
+            area.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const file = files[0];
+                    if (file.type.startsWith('image/')) {
+                        // 根据当前标签页决定处理方式
+                        const activeTab = document.querySelector('.tab-content.active');
+                        if (activeTab.id === 'recognition') {
+                            uploadForRecognition(file);
+                        } else if (activeTab.id === 'add-person') {
+                            currentFile = file;
+                            document.getElementById('person-form').style.display = 'block';
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
